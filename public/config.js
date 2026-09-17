@@ -311,7 +311,7 @@ export const SITE_CONFIG = {
         summary:
           "$1 Pokémon card vending machines in Singapore. Built the full site — an interactive try-a-pull demo, a machine finder, and an enquiry form for shops that want a machine on site.",
         image: "assets/work-luckycardco.jpg",
-        url: "https://tinyurl.com/luckycardco",
+        url: "https://luckycardco.pages.dev",
         // What was actually built, as scannable tags. These do the job a
         // paragraph can't: a prospect reads four of these in a second and
         // knows whether you can build the thing they need.
