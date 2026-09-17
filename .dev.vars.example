@@ -1,0 +1,6 @@
+# Copy this file to ".dev.vars" (remove the .example) and paste your real key
+# below to test the chatbot locally with real replies.
+#
+# .dev.vars is git-ignored, so the real key never gets uploaded anywhere.
+
+ANTHROPIC_API_KEY=sk-ant-REPLACE_WITH_YOUR_KEY

@@ -1,0 +1,1844 @@
+/* ============================================================
+   Molten Studios — the descent
+   ------------------------------------------------------------
+   CONCEPT
+   The page is one continuous fall through molten material as it
+   cools. A single fixed photographic canvas sits behind everything
+   and cross-fades through five stages as you scroll: liquid pour,
+   turbulence, crusting, ember seam, set solid. That arc is not
+   decoration — it maps the customer's journey, from raw material
+   to a finished, set thing.
+
+   RULES
+   - The material is the background. Nothing else competes with it.
+   - The hero is the only unplated moment: type directly on raw
+     liquid. Everything below is read through glass plates, which
+     is what keeps photography legible under body copy.
+   - Radius is 0 everywhere, or a full 75px pill on buttons. Never
+     anything between.
+   - No drop shadows. Depth comes from the material, the glass,
+     and hairline borders.
+   - Display type is Fraunces (poured, soft-terminalled). Body is
+     Inter (engineered). That tension is the brand.
+   ============================================================ */
+
+:root {
+  /* Surfaces — read off the photographs, not invented */
+  --void: #050506;
+  --plate: rgba(7, 8, 9, 0.62);
+  --plate-solid: #0b0c0e;
+
+  /* Type */
+  --paper: rgba(255, 255, 255, 0.94);
+  --ash: rgba(255, 255, 255, 0.62);
+  --ash-dim: rgba(255, 255, 255, 0.42);
+  --ash-faint: rgba(255, 255, 255, 0.26);
+
+  --hairline: rgba(255, 255, 255, 0.1);
+  --hairline-strong: rgba(255, 255, 255, 0.2);
+
+  /* The heat scale */
+  --sage: rgb(160, 224, 171);
+  --amber: rgb(255, 172, 46);
+  --oxblood: rgb(165, 45, 37);
+
+  --iris: linear-gradient(90deg, var(--sage) 0%, var(--amber) 50%, var(--oxblood) 100%);
+  --iris-diagonal: linear-gradient(135deg, var(--sage) 0%, var(--amber) 52%, var(--oxblood) 100%);
+  --iris-deep: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), var(--iris-diagonal);
+
+  /* Action gradient. Every stop is kept bright enough that near-black
+     label text clears contrast across the whole button — the earlier
+     gradient went muddy because it was a dark wash over the full heat
+     scale, dragging the middle into brown. This stays in the warm half
+     of the ramp: sunlit amber falling into ember. */
+  --amber-flow: linear-gradient(105deg, #ffd08a 0%, #ffac2e 46%, #ef8244 100%);
+  --amber-flow-hover: linear-gradient(105deg, #ffe3b4 0%, #ffbe58 46%, #f79a60 100%);
+
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 14px;
+  --space-4: 24px;
+  --space-5: 34px;
+  --space-6: 46px;
+  --space-7: 72px;
+  --space-8: 120px;
+
+  --max-width: 1078px;
+  --pill: 75px;
+
+  --ease: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
+  background: var(--void);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--paper);
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 400;
+}
+
+::selection {
+  background: var(--amber);
+  color: #000;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+/* ====================================================================
+   THE MOLTEN CANVAS
+   One fixed surface behind the whole document. Layers cross-fade and
+   drift under JS control (see initMoltenCanvas in main.js).
+   ==================================================================== */
+
+.molten {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: var(--void);
+  overflow: hidden;
+}
+
+.molten-layer {
+  position: absolute;
+  /* Oversized so parallax drift never exposes an edge. */
+  inset: -10% -6%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0) scale(1.06);
+}
+
+/* Film grain, sitting above everything else in the canvas.
+   Two jobs: it hides the banding that any JPEG shows across large
+   near-black gradients, and it gives the material the tooth of a
+   photograph rather than the plastic evenness of a render. */
+.molten-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Vignette + floor. Paints above the layers (pseudo-elements of a
+   positioned parent stack after its children), which is what buys the
+   contrast that makes white type safe anywhere on the page. */
+.molten::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(130% 85% at 50% 35%, transparent 0%, rgba(5, 5, 6, 0.5) 62%, rgba(5, 5, 6, 0.86) 100%),
+    linear-gradient(180deg, rgba(5, 5, 6, 0.72) 0%, transparent 22%, transparent 70%, rgba(5, 5, 6, 0.6) 100%);
+}
+
+/* ====================================================================
+   TYPE ROLES
+   ==================================================================== */
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ash-dim);
+  margin: 0 0 var(--space-4);
+}
+
+/* A short rule rather than a coloured dot. The dot read as a badge
+   stuck on every section; a rule reads as editorial signposting. */
+.eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: var(--amber-flow);
+  flex: none;
+  opacity: 0.95;
+}
+
+/* On the hero the label sits over raw material, so it needs real
+   contrast rather than the muted treatment used inside plates. */
+.eyebrow-inverse {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.9);
+}
+
+/* Display voice. Fraunces at a high optical size gives the dramatic
+   thick/thin contrast that reads as poured rather than drawn.
+
+   The underglow is two soft warm halos with no offset, so the letters
+   read as lit from behind by the material rather than as text with a
+   coloured shadow stuck under it. Both sit at very low alpha — the
+   effect should be felt before it is noticed, and at higher opacity it
+   immediately tips into neon. */
+.heading-whisper,
+.heading-anchor {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  text-shadow:
+    0 0 22px rgba(255, 172, 46, 0.22),
+    0 0 60px rgba(239, 130, 68, 0.18);
+}
+
+.heading-whisper {
+  font-size: clamp(2.1rem, 4.6vw, 3.7rem);
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+}
+
+.heading-anchor {
+  font-size: clamp(1.75rem, 3.3vw, 2.7rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.018em;
+}
+
+.lede {
+  font-size: 1.05rem;
+  line-height: 1.66;
+  color: var(--ash);
+  max-width: 58ch;
+  font-weight: 300;
+}
+
+.text-muted { color: var(--ash-dim); }
+
+.fine {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ash-dim);
+  letter-spacing: 0.02em;
+}
+
+/* ====================================================================
+   READING PROGRESS
+   ==================================================================== */
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  z-index: 1200;
+  background: var(--iris);
+  transform: scaleX(var(--progress, 0)) translateZ(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+/* ====================================================================
+   SCROLL REVEAL
+   ==================================================================== */
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 30px, 0);
+  transition: opacity 1.3s var(--ease), transform 1.3s var(--ease);
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition: opacity 1.1s var(--ease), transform 1.1s var(--ease);
+  transition-delay: calc(var(--i, 0) * 100ms);
+}
+
+.reveal-stagger.in > * {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+body.reduce-motion .reveal,
+body.reduce-motion .reveal-stagger > * {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+body.reduce-motion { scroll-behavior: auto; }
+
+/* ====================================================================
+   BUTTONS — the only radius in the system
+   ==================================================================== */
+
+/* Square-cornered, matching the plates, the cards and the form fields.
+   The pill survives only on the floating chat widget, which is its own
+   system sitting on top of the page rather than part of it. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 30px;
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: var(--paper);
+  transition: background 0.8s var(--ease), color 0.8s var(--ease),
+    border-color 0.8s var(--ease), transform 0.8s var(--ease);
+}
+
+.btn:hover { transform: translate3d(0, -2px, 0); }
+.btn:active { transform: none; }
+
+/* ---- The action system ------------------------------------------------
+   One colour means "do this": amber. Primary actions are filled with it,
+   secondary actions are outlined and warm to amber on hover. The heat
+   gradient is deliberately absent here — it now appears only on the
+   gauge and progress bar, where it is actually reading temperature.
+   -------------------------------------------------------------------- */
+
+/* Secondary — outlined */
+.btn-ghost-dark,
+.btn-ghost-light {
+  border-color: var(--hairline-strong);
+  color: var(--paper);
+}
+
+.btn-ghost-dark:hover,
+.btn-ghost-light:hover {
+  background: transparent;
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.btn-solid {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--hairline-strong);
+}
+
+.btn-solid:hover {
+  background: rgba(255, 172, 46, 0.14);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+/* Primary — filled with the action gradient */
+.btn-solid-inverse {
+  background: var(--amber-flow);
+  border-color: transparent;
+  color: #14100b;
+  font-weight: 500;
+}
+
+.btn-solid-inverse:hover {
+  background: var(--amber-flow-hover);
+  border-color: transparent;
+  color: #14100b;
+}
+
+/* ====================================================================
+   HEADER
+   ==================================================================== */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+  transition: background-color 1s var(--ease), backdrop-filter 1s var(--ease),
+    border-color 1s var(--ease);
+}
+
+/* At the top of the page the bar is transparent, so the links sit
+   directly on whatever the material happens to be doing underneath —
+   fine over a dark swirl, unreadable over a bright one. This is a soft
+   top-down fade, not a bar: it darkens the strip the type occupies and
+   dissolves before it reads as an edge. It retires once you scroll,
+   because the glass bar then does the same job. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 5, 6, 0.78) 0%,
+    rgba(5, 5, 6, 0.42) 42%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transition: opacity 1s var(--ease);
+}
+
+.site-header.scrolled::before { opacity: 0; }
+
+/* Keep the bar's contents above its own scrim. */
+.site-header .container { position: relative; z-index: 1; }
+
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.site-header.scrolled {
+  background: rgba(5, 5, 6, 0.62);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border-bottom-color: transparent;
+  border-image: var(--iris) 1;
+}
+
+/* The dark layer is doing the legibility work and the warm layer is
+   the glow — in that order, because a glow alone on a bright patch of
+   material makes type harder to read, not easier. */
+.wordmark {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow:
+    0 1px 12px rgba(0, 0, 0, 0.9),
+    0 0 22px rgba(255, 172, 46, 0.2);
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.main-nav a {
+  position: relative;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow:
+    0 1px 10px rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(255, 172, 46, 0.16);
+  transition: color 0.9s var(--ease), text-shadow 0.9s var(--ease);
+}
+
+.main-nav a:hover {
+  color: var(--amber);
+  text-shadow:
+    0 1px 10px rgba(0, 0, 0, 0.9),
+    0 0 20px rgba(255, 172, 46, 0.45);
+}
+
+.main-nav a:not(.nav-cta)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  height: 1px;
+  width: 100%;
+  background: var(--iris);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.9s var(--ease);
+}
+
+.main-nav a:not(.nav-cta):hover::after { transform: scaleX(1); }
+
+.nav-cta {
+  padding: 10px 20px;
+  border-radius: 0;
+  border: 1px solid rgba(255, 172, 46, 0.45);
+  transition: background 0.9s var(--ease), color 0.9s var(--ease),
+    border-color 0.9s var(--ease);
+}
+
+.nav-cta:hover {
+  background: var(--amber-flow);
+  border-color: transparent;
+  color: #14100b;
+}
+
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+/* ====================================================================
+   HERO — the unplated moment
+   ==================================================================== */
+
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: 150px 0 140px;
+}
+
+/* A directional scrim behind the text column only. The hero stays
+   "unplated" — but raw photography under 10px letter-spaced type is
+   not readable, and legibility wins over purity. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    rgba(5, 5, 6, 0.82) 0%,
+    rgba(5, 5, 6, 0.6) 34%,
+    rgba(5, 5, 6, 0.15) 62%,
+    transparent 85%
+  );
+  pointer-events: none;
+}
+
+.hero .container { position: relative; z-index: 2; }
+.hero-inner { max-width: 960px; }
+
+.hero-headline {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: clamp(3.2rem, 8.4vw, 7.4rem);
+  font-weight: 300;
+  line-height: 0.94;
+  letter-spacing: -0.038em;
+  margin: 0 0 var(--space-5);
+  /* Type sits on raw material here, so it carries its own shadow —
+     the one place a shadow is allowed, because it is doing legibility
+     work rather than decoration. The dark layer stays first and does
+     that job; the warm layers behind it add the same underglow the
+     section titles have. Kept dimmer than the section titles because
+     the material behind the hero is already bright. */
+  text-shadow:
+    0 2px 40px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(255, 172, 46, 0.16),
+    0 0 76px rgba(239, 130, 68, 0.13);
+}
+
+.hero-headline .line-lead,
+.hero-headline .line-phrase { display: block; }
+
+/* The swap is deliberately quick. A slow fade looks elegant in isolation
+   but leaves the headline visibly incomplete for a large share of the
+   time, and anyone landing mid-swap sees a hole where the second line
+   should be. Short enough to read as a flicker, not an absence.
+
+   The gradient fill is clipped to the glyphs, and that clip is bounded
+   by the PADDING box — not by the glyph outlines. With a 0.94
+   line-height the box stops above the descenders, which is what sliced
+   the tail off the g in "agency". The generous padding-bottom extends
+   the paint area past the baseline; the matching negative margin keeps
+   the layout spacing unchanged. */
+.hero-headline .line-phrase {
+  background: linear-gradient(100deg, var(--sage), var(--amber) 55%, #ffd79a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.26em;
+  margin-bottom: -0.26em;
+  transition: opacity 0.42s var(--ease-soft), transform 0.42s var(--ease-soft),
+    filter 0.42s var(--ease-soft);
+}
+
+.hero-headline .line-phrase.swapping {
+  opacity: 0;
+  transform: translate3d(0, -0.1em, 0);
+  filter: blur(7px);
+}
+
+body.reduce-motion .hero-headline .line-phrase { transition: none; }
+
+.hero .subhead {
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 46ch;
+  margin: 0 0 var(--space-6);
+  font-weight: 300;
+  text-shadow: 0 1px 24px rgba(0, 0, 0, 0.7);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.scroll-badge {
+  position: absolute;
+  left: var(--space-6);
+  bottom: var(--space-7);
+  width: 88px;
+  height: 88px;
+  z-index: 2;
+  animation: badge-spin 10s linear infinite;
+  will-change: transform;
+}
+
+.scroll-badge text {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  fill: rgba(255, 255, 255, 0.72);
+  text-transform: uppercase;
+}
+
+.scroll-badge .badge-dot { fill: var(--amber); }
+
+@keyframes badge-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+body.reduce-motion .scroll-badge { animation: none; }
+
+/* ====================================================================
+   SECTIONS + PLATES
+   Content below the hero is read through glass. The plate is what
+   makes body copy safe over photography — and it looks like the
+   material is being viewed through a window.
+   ==================================================================== */
+
+.section {
+  position: relative;
+  padding: clamp(60px, 8vw, 120px) clamp(16px, 4vw, 32px);
+}
+
+.section-tight { padding-top: clamp(40px, 5vw, 70px); }
+
+/* Defined after .container so its padding wins on shared elements. */
+.plate {
+  position: relative;
+  background: var(--plate);
+  backdrop-filter: blur(26px) saturate(125%);
+  -webkit-backdrop-filter: blur(26px) saturate(125%);
+  border: 1px solid var(--hairline);
+  padding: clamp(28px, 4.5vw, 58px);
+}
+
+/* The plate's own border is enough. A gradient cap repeated on all
+   seven plates turned one idea into wallpaper — the heat scale now
+   appears only where it means something (the gauge and the progress
+   bar, both of which are literally reading temperature). */
+
+.section-head {
+  max-width: 62ch;
+  margin-bottom: var(--space-6);
+}
+
+.section-head .lede { margin-top: var(--space-4); }
+
+/* ====================================================================
+   DELIVERABLES
+   ==================================================================== */
+
+.deliverables { border-top: 1px solid var(--hairline); }
+
+.deliverable {
+  position: relative;
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--hairline);
+  transition: padding-left 1s var(--ease), background-color 1s var(--ease);
+}
+
+.deliverable::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--amber);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+  transition: transform 1s var(--ease);
+}
+
+.deliverable:hover::before { transform: scaleY(1); }
+
+.deliverable:hover {
+  padding-left: var(--space-4);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.deliverable h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-2);
+}
+
+.deliverable p {
+  color: var(--ash);
+  max-width: 60ch;
+}
+
+/* ====================================================================
+   PACKAGES — differentiated by heat, not by size
+   ==================================================================== */
+
+.package-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.package {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 1.1s var(--ease), border-color 1.1s var(--ease),
+    background-color 1.1s var(--ease);
+}
+
+.package:hover {
+  transform: translate3d(0, -6px, 0);
+  border-color: var(--hairline-strong);
+}
+
+.package-glow {
+  position: absolute;
+  inset: -50% -20% auto -20%;
+  height: 70%;
+  z-index: -1;
+  filter: blur(60px);
+  opacity: 0.5;
+  transition: opacity 1.2s var(--ease);
+  pointer-events: none;
+}
+
+.package:hover .package-glow { opacity: 0.85; }
+
+.package::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+}
+
+/* -- quiet: material not yet heated -------------------------------- */
+.package.tone-quiet::before { background: var(--hairline-strong); }
+
+.package.tone-quiet .package-glow {
+  background: radial-gradient(50% 100% at 50% 0%, rgba(255, 255, 255, 0.13), transparent 70%);
+}
+
+.package.tone-quiet .package-price { color: var(--paper); }
+
+/* -- hot: working heat --------------------------------------------- */
+.package.tone-hot {
+  background: rgba(255, 172, 46, 0.055);
+  border-color: rgba(255, 172, 46, 0.3);
+}
+
+.package.tone-hot::before {
+  height: 3px;
+  background: linear-gradient(90deg, var(--amber), var(--oxblood));
+}
+
+.package.tone-hot .package-glow {
+  background: radial-gradient(55% 100% at 50% 0%, rgba(255, 172, 46, 0.5), rgba(165, 45, 37, 0.28) 55%, transparent 75%);
+  opacity: 0.75;
+}
+
+.package.tone-hot:hover .package-glow { opacity: 1; }
+
+/* Same gradient as the button below it, so the tier reads as one
+   object. Padding extends the clip box past the baseline — gradient
+   text is clipped to the padding box, so without it any descender
+   (a comma included) loses its tail. */
+.package.tone-hot .package-price {
+  background: var(--amber-flow);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.package.tone-hot .package-tag { color: var(--amber); }
+.package.tone-hot .package-features li::before { color: var(--amber); }
+
+/* The featured tier gets the filled amber; the other two stay outlined,
+   so the hierarchy is carried by fill rather than by three competing
+   colours. */
+.package.tone-hot .btn {
+  background: var(--amber-flow);
+  border-color: transparent;
+  color: #14100b;
+  font-weight: 500;
+}
+
+.package.tone-hot .btn:hover {
+  background: var(--amber-flow-hover);
+  border-color: transparent;
+  color: #14100b;
+}
+
+/* -- cool: material already set ------------------------------------ */
+.package.tone-cool { border-color: rgba(160, 224, 171, 0.24); }
+
+.package.tone-cool::before {
+  background: linear-gradient(90deg, var(--sage), rgba(160, 224, 171, 0.22));
+}
+
+.package.tone-cool .package-glow {
+  background: radial-gradient(50% 100% at 50% 0%, rgba(160, 224, 171, 0.34), transparent 72%);
+}
+
+.package.tone-cool .package-price { color: var(--sage); }
+.package.tone-cool .package-tag { color: var(--sage); }
+.package.tone-cool .package-features li::before { color: var(--sage); }
+
+/* -- shared card internals ----------------------------------------- */
+
+.package-tag {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-4);
+  color: var(--ash-dim);
+}
+
+.package-price {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 2.5rem;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.price-note {
+  font-size: 11px;
+  color: var(--ash-dim);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-4);
+  letter-spacing: 0.04em;
+}
+
+.package-summary {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ash);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: var(--space-4);
+}
+
+.package-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ash);
+  margin-bottom: var(--space-6);
+  flex: 1;
+}
+
+.package-features li {
+  padding-left: 20px;
+  position: relative;
+}
+
+.package-features li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--ash-faint);
+}
+
+.package .btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 12px 20px;
+}
+
+/* ====================================================================
+   DEPOSIT TERMS
+   A framed block rather than a note, because this is the one place on
+   the page where the visitor is being asked to part with money before
+   they have anything. Amber seam ties it to the hot package card; the
+   hairline grid keeps it in the same family as the other sections.
+   ==================================================================== */
+
+.deposit {
+  margin-top: var(--space-6);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid transparent;
+  border-image: none;
+  background: rgba(7, 8, 9, 0.5);
+  position: relative;
+}
+
+/* The seam carries the colourway down the left edge — the same gradient
+   the buttons use, so the block reads as ours rather than as a warning. */
+.deposit::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  width: 2px;
+  background: var(--amber-flow);
+}
+
+.deposit-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* The number is the headline. Someone who reads nothing else on this
+   block should still leave knowing it is S$150 and not a percentage. */
+.deposit-figure {
+  flex: none;
+}
+
+/* Caption under the number. On its own the figure is just a price; with
+   two words under it, it is an offer. */
+.deposit-amount-note {
+  margin-top: var(--space-2);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash-dim);
+  max-width: 19ch;
+  line-height: 1.5;
+}
+
+.deposit-amount {
+  font-family: var(--font-display);
+  font-size: clamp(34px, 4.4vw, 52px);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  flex: none;
+  background: var(--amber-flow);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Same descender guard as the hero: background-clip paints to the
+     padding box, so the box needs room below the baseline. */
+  padding-bottom: 0.16em;
+  margin-bottom: -0.16em;
+}
+
+.deposit-heading {
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2vw, 23px);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+  margin: 0;
+}
+
+.deposit-intro {
+  margin-top: var(--space-3);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ash);
+  max-width: 56ch;
+}
+
+.deposit-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--hairline);
+}
+
+.deposit-point {
+  background: rgba(5, 6, 7, 0.55);
+  padding: var(--space-5);
+  transition: background-color 1.1s var(--ease);
+}
+
+.deposit-point:hover {
+  background: rgba(255, 172, 46, 0.045);
+}
+
+.deposit-num {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--amber);
+  opacity: 0.75;
+  margin-bottom: var(--space-3);
+}
+
+.deposit-point h4 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--paper);
+  margin: 0 0 var(--space-3);
+}
+
+.deposit-point p {
+  font-size: 13.5px;
+  line-height: 1.68;
+  color: var(--ash);
+  margin: 0;
+}
+
+.package-note {
+  margin-top: var(--space-5);
+  font-size: 12px;
+  color: var(--ash-dim);
+  max-width: 68ch;
+  line-height: 1.6;
+}
+
+/* ====================================================================
+   PROCESS
+   Numbered because it genuinely is a sequence — the order is what the
+   reader needs to know.
+   ==================================================================== */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-5);
+}
+
+.step {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--space-4);
+  transition: border-color 1.1s var(--ease);
+}
+
+.step:hover { border-top-color: var(--amber); }
+
+.step .num {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  display: block;
+  margin-bottom: var(--space-3);
+  color: var(--amber);
+}
+
+.step h3 {
+  font-size: 1.02rem;
+  font-weight: 400;
+  margin-bottom: var(--space-3);
+  letter-spacing: -0.005em;
+}
+
+.step p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ash);
+}
+
+/* ====================================================================
+   DEMO
+   ==================================================================== */
+
+.demo-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-7);
+  align-items: start;
+}
+
+.demo-inner .body {
+  color: var(--ash);
+  margin-bottom: var(--space-5);
+}
+
+/* ====================================================================
+   TRUST STRIP
+   A thin band of checkable facts between the hero and the first real
+   section. Deliberately small — it reassures in passing rather than
+   demanding a read.
+   ==================================================================== */
+
+.trust-strip {
+  position: relative;
+  padding: var(--space-4) clamp(16px, 4vw, 32px);
+  background: rgba(7, 8, 9, 0.66);
+  backdrop-filter: blur(20px) saturate(125%);
+  -webkit-backdrop-filter: blur(20px) saturate(125%);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.trust-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.trust-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  white-space: nowrap;
+}
+
+/* Sage separator rather than amber — amber is the action colour, and
+   this strip is information, not a thing to click. */
+.trust-list li:not(:last-child)::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--sage);
+  opacity: 0.55;
+}
+
+/* ====================================================================
+   AUDIENCE + WHY
+   Two quiet 2-up grids. Same card shell, so the page doesn't sprout a
+   new visual language for every section.
+   ==================================================================== */
+
+.audience-grid,
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+}
+
+.audience-card,
+.why-card {
+  background: rgba(7, 8, 9, 0.5);
+  padding: var(--space-5);
+  transition: background-color 1.1s var(--ease);
+}
+
+.audience-card:hover,
+.why-card:hover {
+  background: rgba(255, 172, 46, 0.045);
+}
+
+.audience-card h3,
+.why-card h3 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  margin-bottom: var(--space-3);
+}
+
+.audience-card p,
+.why-card p {
+  color: var(--ash);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ====================================================================
+   WORK
+   A portfolio entry has one job: prove the thing exists and is good.
+   So each card leads with a real screenshot, states plainly where the
+   build actually is, and links straight out to it.
+   ==================================================================== */
+
+.work-intro { margin-bottom: var(--space-5); }
+
+.work-card {
+  border: 1px solid var(--hairline);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 1.1s var(--ease), transform 1.1s var(--ease);
+}
+
+.work-card:hover {
+  border-color: var(--hairline-strong);
+  transform: translate3d(0, -4px, 0);
+}
+
+.work-shot {
+  display: block;
+  overflow: hidden;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--void);
+}
+
+.work-shot img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 1.4s var(--ease);
+}
+
+.work-card:hover .work-shot img {
+  transform: scale(1.03);
+}
+
+.work-body {
+  padding: var(--space-5);
+}
+
+/* The case study is the proof block, so it gets more room than a normal
+   plate and a taller visual. */
+.plate-feature {
+  max-width: 1180px;
+}
+
+.work-case .work-body {
+  padding: var(--space-6) clamp(var(--space-5), 4vw, var(--space-7));
+}
+
+.work-case .work-name { font-size: 2rem; }
+
+.work-case .work-summary {
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+/* Feature tags — what was actually built, scannable in a second.
+   Sage-bordered so they read as information, not as buttons. */
+.work-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.work-tags li {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage);
+  border: 1px solid rgba(160, 224, 171, 0.32);
+  padding: 7px 13px;
+  white-space: nowrap;
+}
+
+.work-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.work-name {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+/* Says where the build actually is. An honest "Launching soon" costs
+   nothing; a prospect who clicks expecting a live site and finds a
+   preview is the expensive version. */
+.work-status {
+  flex: none;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--amber);
+  border: 1px solid rgba(255, 172, 46, 0.42);
+  padding: 5px 11px;
+  white-space: nowrap;
+}
+
+.work-category {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash-dim);
+  margin-bottom: var(--space-4);
+}
+
+.work-summary {
+  color: var(--ash);
+  max-width: 62ch;
+  margin-bottom: var(--space-5);
+  font-size: 0.97rem;
+}
+
+/* Pull-quote. Set in the display face because a client's own words are
+   the most persuasive thing on the page and should read like a
+   statement, not a caption. */
+.work-quote {
+  margin: 0 0 var(--space-5);
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--amber);
+}
+
+.work-quote p {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 1.15rem;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--paper);
+  max-width: 54ch;
+}
+
+.work-quote cite {
+  display: block;
+  margin-top: var(--space-3);
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash-dim);
+}
+
+.work-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--paper);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 172, 46, 0.5);
+  transition: color 0.9s var(--ease), border-color 0.9s var(--ease), gap 0.9s var(--ease);
+}
+
+.work-link:hover {
+  color: var(--amber);
+  border-bottom-color: var(--amber);
+  gap: 13px;
+}
+
+.work-more {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  color: var(--ash-dim);
+}
+
+.work-empty {
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  padding: var(--space-6) 0;
+  color: var(--ash);
+  max-width: 54ch;
+}
+
+/* ====================================================================
+   FAQ
+   ==================================================================== */
+
+.faq-list { border-top: 1px solid var(--hairline); }
+
+.faq-item {
+  position: relative;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.faq-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 1px;
+  width: 100%;
+  background: var(--amber);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 1.1s var(--ease);
+}
+
+.faq-item.open::before { transform: scaleX(1); }
+
+.faq-q {
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: inherit;
+  text-align: left;
+  padding: var(--space-5) 44px var(--space-5) 0;
+  cursor: pointer;
+  position: relative;
+  line-height: 1.4;
+  letter-spacing: -0.008em;
+  transition: color 0.9s var(--ease);
+}
+
+.faq-q:hover { color: var(--amber); }
+
+.faq-q::after {
+  content: "+";
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ash-dim);
+  transform: translateY(-50%) rotate(0deg);
+  transition: transform 1.1s var(--ease), color 0.9s var(--ease);
+}
+
+.faq-item.open .faq-q::after {
+  color: var(--amber);
+  transform: translateY(-50%) rotate(135deg);
+}
+
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 1.1s var(--ease), opacity 0.9s var(--ease);
+}
+
+.faq-item.open .faq-a {
+  max-height: 420px;
+  opacity: 1;
+}
+
+.faq-a p {
+  color: var(--ash);
+  padding-bottom: var(--space-5);
+  max-width: 66ch;
+}
+
+/* ====================================================================
+   CONTACT
+   ==================================================================== */
+
+.contact-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-7);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash-dim);
+  margin-bottom: var(--space-2);
+}
+
+/* Underline drawn as a background strip so it can hold the gradient. */
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border-radius: 0;
+  border: none;
+  background-color: transparent;
+  background-image: linear-gradient(var(--hairline-strong), var(--hairline-strong));
+  background-size: 100% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  padding: 10px 0;
+  transition: background-size 1s var(--ease);
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  background-image: var(--iris);
+  background-size: 100% 2px;
+}
+
+.field select option {
+  background: var(--plate-solid);
+  color: var(--paper);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+/* The submit stretches to the full form width, and a 75px pill at that
+   width reads as a stretched lozenge rather than a button. A square
+   rectangle is the honest shape here — and it matches the 0-radius
+   underline fields directly above it. */
+.contact-form button[type="submit"] {
+  border-radius: 0;
+  width: 100%;
+  padding: 16px 24px;
+  background: var(--amber-flow);
+  border-color: transparent;
+  color: #16100a;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin-top: var(--space-2);
+}
+
+.contact-form button[type="submit"]:hover {
+  background: var(--amber-flow-hover);
+  border-color: transparent;
+  color: #16100a;
+  transform: none;
+}
+
+.contact-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.contact-actions .btn { margin-top: 0; }
+
+.contact-actions button[type="submit"] { flex: 1 1 200px; }
+
+/* WhatsApp sits beside the form as the impatient path. Outlined in sage
+   so it reads as an alternative route rather than competing with the
+   amber primary. */
+.btn-whatsapp {
+  flex: 0 0 auto;
+  border-color: rgba(160, 224, 171, 0.45);
+  color: var(--sage);
+  padding: 16px 24px;
+}
+
+.btn-whatsapp:hover {
+  background: rgba(160, 224, 171, 0.1);
+  border-color: var(--sage);
+  color: var(--sage);
+}
+
+.package-thirdparty {
+  border-left: 2px solid rgba(160, 224, 171, 0.4);
+  padding-left: var(--space-4);
+  color: var(--ash);
+}
+
+.form-status {
+  font-size: 13px;
+  color: var(--ash);
+  min-height: 20px;
+}
+
+.form-status.error { color: var(--amber); }
+
+.contact-aside dt {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash-dim);
+  margin-bottom: var(--space-2);
+}
+
+.contact-aside dd {
+  margin: 0 0 var(--space-5);
+  font-size: 1rem;
+}
+
+.contact-aside dd a { transition: color 0.9s var(--ease); }
+.contact-aside dd a:hover { color: var(--amber); }
+
+/* ====================================================================
+   FOOTER
+   ==================================================================== */
+
+.site-footer {
+  position: relative;
+  padding: var(--space-6) 0;
+  border-top: 1px solid var(--hairline);
+  background: rgba(5, 5, 6, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* ====================================================================
+   HEAT GAUGE — the section rail, re-read as an instrument
+   The track fills with the heat scale as you descend, and the readout
+   names the state of the material you are currently inside.
+   ==================================================================== */
+
+.section-rail {
+  position: fixed;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 15px;
+  padding-right: 14px;
+}
+
+/* Track */
+.section-rail::before {
+  content: "";
+  position: absolute;
+  right: 3px;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--hairline);
+}
+
+/* Fill — height follows the shared --progress variable. */
+.section-rail::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  top: -4px;
+  width: 1px;
+  height: calc(var(--progress, 0) * (100% + 8px));
+  background: linear-gradient(180deg, var(--sage), var(--amber) 45%, var(--oxblood));
+}
+
+.rail-readout {
+  position: absolute;
+  right: 14px;
+  top: -34px;
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--amber);
+  white-space: nowrap;
+  transition: opacity 0.6s var(--ease);
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ash-faint);
+  cursor: pointer;
+  transition: color 1.25s var(--ease);
+}
+
+.rail-item:hover { color: var(--ash); }
+.rail-item.active { color: var(--paper); }
+
+.rail-label {
+  opacity: 0;
+  transform: translate3d(8px, 0, 0);
+  transition: opacity 1.25s var(--ease), transform 1.25s var(--ease);
+  white-space: nowrap;
+}
+
+.rail-item:hover .rail-label,
+.rail-item.active .rail-label {
+  opacity: 1;
+  transform: none;
+}
+
+.rail-tick {
+  width: 14px;
+  height: 1px;
+  flex: none;
+  background: currentColor;
+  transition: width 1.25s var(--ease), background 1.25s var(--ease);
+}
+
+.rail-item.active .rail-tick {
+  width: 30px;
+  background: var(--amber);
+}
+
+/* ====================================================================
+   RESPONSIVE
+   ==================================================================== */
+
+/* The gauge needs clear room beside the 1078px plate. */
+@media (max-width: 1260px) {
+  .section-rail { display: none; }
+}
+
+/* The badge lives in the hero's bottom-left corner. Once the viewport
+   is narrow or short, the hero's content column grows tall enough to
+   reach that corner and the badge lands on top of the CTA buttons.
+   It is ornament, so it yields rather than fighting for the space. */
+@media (max-width: 900px), (max-height: 720px) {
+  .scroll-badge { display: none; }
+}
+
+/* The horizontal nav runs out of room well before the phone breakpoint —
+   at ~760px the links were wrapping onto two lines and colliding with
+   the CTA. Collapse to the menu button here instead. */
+@media (max-width: 900px) {
+  .nav-toggle { display: block; }
+
+  .main-nav {
+    position: absolute;
+    top: 76px;
+    left: 0;
+    right: 0;
+    background: rgba(5, 5, 6, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0 var(--space-4);
+    border-bottom: 1px solid var(--hairline);
+    display: none;
+  }
+
+  .main-nav.open { display: flex; }
+
+  .main-nav a {
+    padding: var(--space-4) 0;
+    width: 100%;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .main-nav a:last-child { border-bottom: none; }
+
+  .nav-cta {
+    border: none;
+    padding: var(--space-4) 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .package-grid { grid-template-columns: 1fr; }
+  .audience-grid,
+  .why-grid,
+  .deposit-points { grid-template-columns: 1fr; }
+
+  .deposit-head {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .steps { grid-template-columns: repeat(2, 1fr); }
+  .demo-inner,
+  .contact-inner {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+}
+
+@media (max-width: 720px) {
+  body { font-size: 16px; }
+
+  .hero {
+    min-height: auto;
+    padding: 132px 0 88px;
+  }
+
+  .steps { grid-template-columns: 1fr; }
+
+  /* Fixed backgrounds are expensive and jumpy on mobile browsers whose
+     toolbars resize the viewport — pin the canvas to the window instead
+     of letting it track scroll. */
+  .molten-layer { inset: -14% -10%; }
+}

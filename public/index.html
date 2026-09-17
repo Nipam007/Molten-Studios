@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Websites built to grow your business</title>
+  <meta name="description" content="Websites built to grow your business. Design, copy and setup for Singapore service businesses, startups and SMEs — clear flat pricing, live in days." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Fraunces carries the display voice: a variable serif whose soft,
+       poured letterforms match the material. Inter does the engineered
+       work underneath it. -->
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <!-- The first stage is the hero's surface — fetch it early. -->
+  <link rel="preload" as="image" href="assets/stage-1-pour.jpg" fetchpriority="high" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/chat-widget.css" />
+</head>
+<body>
+
+  <!-- ====================================================================
+       The molten canvas. One fixed surface behind the entire page, made
+       of five photographic stages that cross-fade as you descend:
+       liquid pour → turbulence → crusting → ember seam → set solid.
+       Scrolling the page is descending through the material as it cools.
+       ==================================================================== -->
+  <div class="molten" id="molten" aria-hidden="true">
+    <!-- Only the first stage loads with the page. The rest carry their
+         source in data-bg and are attached once the page is idle, so
+         2MB of full-quality material never competes with first paint. -->
+    <div class="molten-layer" data-stage="Liquid"    style="background-image:url('assets/stage-1-pour.jpg')"></div>
+    <div class="molten-layer" data-stage="Turbulent" data-bg="assets/stage-2-turbulence.jpg"></div>
+    <div class="molten-layer" data-stage="Crusting"  data-bg="assets/stage-3-cooling.jpg"></div>
+    <div class="molten-layer" data-stage="Ember"     data-bg="assets/stage-4-ember.jpg"></div>
+    <div class="molten-layer" data-stage="Set"       data-bg="assets/stage-5-set.jpg"></div>
+    <div class="molten-grain"></div>
+  </div>
+
+  <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
+
+  <!-- Heat gauge: section rail + a live readout of the material's state,
+       built from config. -->
+  <nav class="section-rail" id="section-rail" aria-label="Jump to section">
+    <span class="rail-readout" id="rail-readout" aria-hidden="true"></span>
+  </nav>
+
+  <header class="site-header" id="site-header">
+    <div class="container">
+      <a href="#top" class="wordmark" data-wordmark></a>
+      <nav class="main-nav" id="main-nav">
+        <a href="#what">What we build</a>
+        <a href="#packages">Packages</a>
+        <a href="#process">Process</a>
+        <a href="#work">Work</a>
+        <a href="#contact" class="nav-cta">Start a project</a>
+      </nav>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ---- Hero: the only unplated moment. Type sits directly on the
+         raw material — everything below it is viewed through glass. ---- -->
+    <section class="hero" id="hero">
+      <div class="container">
+        <div class="hero-inner">
+          <p class="eyebrow eyebrow-inverse" data-cfg="hero.eyebrow"></p>
+          <h1 class="hero-headline">
+            <span class="line-lead" data-cfg="hero.headlineLead"></span>
+            <span class="line-phrase" id="hero-phrase" aria-live="polite"></span>
+          </h1>
+          <p class="subhead" data-cfg="hero.subhead"></p>
+          <div class="hero-actions">
+            <a class="btn btn-solid-inverse" data-cta="hero.primaryCta"></a>
+            <a class="btn btn-ghost-dark" data-cta="hero.secondaryCta"></a>
+          </div>
+        </div>
+      </div>
+
+      <svg class="scroll-badge" id="scroll-badge" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <path id="badge-circle" d="M 50,50 m -34,0 a 34,34 0 1,1 68,0 a 34,34 0 1,1 -68,0" />
+        </defs>
+        <text><textPath href="#badge-circle">Scroll down · Scroll down · </textPath></text>
+        <circle class="badge-dot" cx="50" cy="50" r="2.5" />
+      </svg>
+    </section>
+
+    <!-- ---- Trust strip: short checkable facts, straight after the
+         hero and before any ask. ---- -->
+    <div class="trust-strip">
+      <div class="container">
+        <ul class="trust-list" data-trust></ul>
+      </div>
+    </div>
+
+    <!-- ---- Previous builds: sits directly below the hero. Proof before
+         pitch — the strongest visual block on the page. ---- -->
+    <section class="section section-tight" id="work">
+      <div class="container plate plate-feature">
+        <div class="section-head">
+          <p class="eyebrow">Previous builds</p>
+          <h2 class="heading-whisper" data-cfg="work.heading"></h2>
+        </div>
+        <div data-work></div>
+      </div>
+    </section>
+
+    <!-- ---- What we build ---- -->
+    <section class="section" id="what">
+      <div class="container plate">
+        <div class="section-head">
+          <p class="eyebrow">What we build</p>
+          <h2 class="heading-whisper" data-cfg="deliverables.heading"></h2>
+          <p class="lede" data-cfg="deliverables.intro"></p>
+        </div>
+        <div class="deliverables" data-deliverables></div>
+      </div>
+    </section>
+
+    <!-- ---- Who we build for ---- -->
+    <section class="section" id="audience">
+      <div class="container plate">
+        <div class="section-head">
+          <p class="eyebrow">Who we build for</p>
+          <h2 class="heading-whisper" data-cfg="audience.heading"></h2>
+          <p class="lede" data-cfg="audience.intro"></p>
+        </div>
+        <div class="audience-grid" data-audience></div>
+      </div>
+    </section>
+
+    <!-- ---- Packages: prices visible, no "contact us for a quote" ---- -->
+    <section class="section" id="packages">
+      <div class="container plate">
+        <div class="section-head">
+          <p class="eyebrow">Packages</p>
+          <h2 class="heading-whisper" data-cfg="packages.heading"></h2>
+          <p class="lede" data-cfg="packages.intro"></p>
+        </div>
+        <div class="package-grid" data-packages></div>
+        <p class="package-note" data-cfg="packages.note"></p>
+        <p class="package-note package-thirdparty" data-cfg="packages.thirdPartyNote"></p>
+        <div class="package-note" data-deposit-slot></div>
+      </div>
+    </section>
+
+    <!-- ---- Why Molten ---- -->
+    <section class="section" id="why">
+      <div class="container plate">
+        <div class="section-head">
+          <p class="eyebrow">Why Molten</p>
+          <h2 class="heading-whisper" data-cfg="why.heading"></h2>
+        </div>
+        <div class="why-grid" data-why></div>
+      </div>
+    </section>
+
+    <!-- ---- Process ---- -->
+    <section class="section" id="process">
+      <div class="container plate">
+        <div class="section-head">
+          <p class="eyebrow">How it works</p>
+          <h2 class="heading-whisper" data-cfg="process.heading"></h2>
+        </div>
+        <div class="steps" data-steps></div>
+
+        <!-- The demo offer. Sits after the steps rather than under the
+             prices: read here it is the thing you get, read there it was
+             a toll gate in front of the thing you get. -->
+        <div class="deposit" data-deposit></div>
+      </div>
+    </section>
+
+    <!-- ---- Live demo callout: the chatbot IS the proof ---- -->
+    <section class="section" id="demo">
+      <div class="container plate">
+        <div class="demo-inner">
+          <div>
+            <p class="eyebrow" data-cfg="demo.eyebrow"></p>
+            <h2 class="heading-anchor" data-cfg="demo.heading"></h2>
+          </div>
+          <div>
+            <p class="body" data-cfg="demo.body"></p>
+            <button class="btn btn-ghost-light" id="open-chat-cta" data-cfg="demo.cta.label"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- FAQ ---- -->
+    <section class="section" id="faq">
+      <div class="container plate">
+        <div class="section-head">
+          <p class="eyebrow">FAQs</p>
+          <h2 class="heading-whisper" data-cfg="faq.heading"></h2>
+        </div>
+        <div class="faq-list" data-faq></div>
+      </div>
+    </section>
+
+    <!-- ---- Contact ---- -->
+    <section class="section" id="contact">
+      <div class="container plate">
+        <div class="contact-inner">
+          <div>
+            <p class="eyebrow">Start a project</p>
+            <h2 class="heading-whisper" data-cfg="contact.heading"></h2>
+            <p class="lede" style="margin-top: 24px;" data-cfg="contact.body"></p>
+          </div>
+          <div>
+            <form class="contact-form" id="contact-form">
+              <div class="field">
+                <label for="cf-name">Your name</label>
+                <input type="text" id="cf-name" name="name" required />
+              </div>
+              <div class="field">
+                <label for="cf-email">Email</label>
+                <input type="email" id="cf-email" name="email" required />
+              </div>
+              <div class="field">
+                <label for="cf-package">Package</label>
+                <select id="cf-package" name="package" data-package-options></select>
+              </div>
+              <div class="field">
+                <label for="cf-message">What does the business do?</label>
+                <textarea id="cf-message" name="message" required></textarea>
+              </div>
+              <p class="form-status" role="status"></p>
+              <div class="contact-actions">
+                <button type="submit" class="btn btn-solid-inverse">Send enquiry</button>
+                <a class="btn btn-whatsapp" data-whatsapp-cta></a>
+              </div>
+            </form>
+            <dl class="contact-aside" style="margin-top: 46px;">
+              <dt>Email</dt>
+              <dd><a href="#" data-contact-email></a></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="wordmark" data-wordmark></div>
+          <p class="fine" style="margin-top: 8px;" data-cfg="hero.eyebrow"></p>
+        </div>
+        <p class="fine">
+          &copy; <span data-year></span> <span data-brand-name></span>. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/chat-widget.js"></script>
+</body>
+</html>

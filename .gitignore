@@ -1,0 +1,9 @@
+# Real secrets for local chatbot testing. The .example is tracked.
+.dev.vars
+
+# Machine-local Claude Code settings — this is the file that leaked
+# publicly back when the whole directory was being deployed.
+.claude/
+
+.wrangler/
+node_modules/
