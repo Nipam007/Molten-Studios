@@ -72,7 +72,8 @@ FREQUENTLY ASKED QUESTIONS:
 ${faqBlock}
 
 CONTACT:
-Email: ${cfg.contact.email}
+${cfg.contact.email ? `Email: ${cfg.contact.email}` : "Email: not published yet — use WhatsApp"}
+WhatsApp: ${cfg.contact.whatsapp.display} (${cfg.contact.whatsapp.url})
 ${cfg.contact.bookingUrl ? `Booking link: ${cfg.contact.bookingUrl}` : ""}
 
 HOW TO HANDLE SPECIFIC SITUATIONS:
@@ -180,7 +181,7 @@ export async function onRequestPost(context) {
     const data = await res.json();
 
     if (data.stop_reason === "refusal") {
-      reply = `I'm not able to help with that. Feel free to email ${SITE_CONFIG.contact.email}.`;
+      reply = `I'm not able to help with that. Feel free to message us on WhatsApp at ${SITE_CONFIG.contact.whatsapp.display}.`;
     } else {
       const textBlock = Array.isArray(data.content)
         ? data.content.find((b) => b.type === "text")

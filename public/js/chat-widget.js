@@ -130,7 +130,7 @@ function initChatWidget() {
       if (!res.ok || data.error) {
         addBubble(
           messages,
-          `Sorry, I'm having trouble responding right now. You can email ${SITE_CONFIG.contact.email} directly.`,
+          `Sorry, I'm having trouble responding right now. You can message us on WhatsApp at ${SITE_CONFIG.contact.whatsapp.display}.`,
           "bot"
         );
       } else {
@@ -141,7 +141,7 @@ function initChatWidget() {
       typing.remove();
       addBubble(
         messages,
-        `Sorry, something went wrong. You can email ${SITE_CONFIG.contact.email} directly.`,
+        `Sorry, something went wrong. You can message us on WhatsApp at ${SITE_CONFIG.contact.whatsapp.display}.`,
         "bot"
       );
     } finally {

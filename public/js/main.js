@@ -721,7 +721,14 @@ function renderFaq() {
 function renderContact() {
   const { contact, packages } = SITE_CONFIG;
 
+  // Publishing an address that bounces is worse than publishing none, so
+  // the whole row is pulled when there is no working address to show.
   document.querySelectorAll("[data-contact-email]").forEach((el) => {
+    const row = el.closest("dl, .contact-aside") || el.parentElement;
+    if (!contact.email) {
+      if (row) row.style.display = "none";
+      return;
+    }
     el.textContent = contact.email;
     el.href = `mailto:${contact.email}`;
   });
@@ -745,18 +752,26 @@ function initContactForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // No form service connected yet — fall back to opening the visitor's
-    // email client so an enquiry is never silently lost.
+    // No form service connected yet, so the enquiry goes to WhatsApp with
+    // the answers already written out. The previous fallback opened a
+    // mailto: to an address on a domain that does not resolve, so every
+    // enquiry submitted through this form bounced. WhatsApp is the one
+    // channel that works today, and it is where most Singapore enquiries
+    // would rather land anyway.
     if (!endpoint) {
       const data = new FormData(form);
-      const subject = encodeURIComponent(`Project enquiry — ${data.get("package") || "General"}`);
-      const body = encodeURIComponent(
-        `Name: ${data.get("name")}\nEmail: ${data.get("email")}\nPackage: ${
-          data.get("package") || "Not sure yet"
-        }\n\n${data.get("message")}`
-      );
-      window.location.href = `mailto:${SITE_CONFIG.contact.email}?subject=${subject}&body=${body}`;
-      status.textContent = "Opening your email app…";
+      const lines = [
+        "Hi Molten Studios — enquiry from your website.",
+        "",
+        "Name: " + data.get("name"),
+        "Email: " + data.get("email"),
+        "Package: " + (data.get("package") || "Not sure yet"),
+        "",
+        data.get("message"),
+      ];
+      const text = encodeURIComponent(lines.join(String.fromCharCode(10)));
+      window.open(whatsappUrl() + "?text=" + text, "_blank", "noopener");
+      status.textContent = "Opening WhatsApp with your details filled in…";
       status.className = "form-status";
       return;
     }
@@ -775,7 +790,7 @@ function initContactForm() {
       status.textContent = "Thanks — you'll get a reply within one working day.";
       status.className = "form-status";
     } catch {
-      status.textContent = `Something went wrong. Please email ${SITE_CONFIG.contact.email} directly.`;
+      status.textContent = `Something went wrong. Please message us on WhatsApp at ${SITE_CONFIG.contact.whatsapp.display}.`;
       status.className = "form-status error";
     }
   });

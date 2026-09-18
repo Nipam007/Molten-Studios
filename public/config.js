@@ -399,7 +399,10 @@ export const SITE_CONFIG = {
   contact: {
     heading: "Have a business. Need a website?",
     body: "Tell us what the business does and which package fits. You'll get a reply within one working day — or message us on WhatsApp and get one sooner.",
-    email: "hello@moltenstudios.co", // <-- change with your real email
+    // Left blank deliberately: moltenstudios.co was never registered, so
+    // this address bounced. The contact row hides itself while this is
+    // empty. Fill it in the moment the real domain and mailbox exist.
+    email: "",
     // Singapore mobile. `url` is what every WhatsApp button points at —
     // wa.me needs the country code and no plus sign or spaces.
     whatsapp: {
