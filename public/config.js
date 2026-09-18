@@ -15,8 +15,9 @@ export const SITE_CONFIG = {
     wordmark: "MOLTEN STUDIOS", // how it appears in the top-left nav
     // Domain not secured yet — update once you've registered one.
     domain: "moltenstudios.co",
-    // Optional logo image (e.g. "/assets/logo.svg"). null = use the wordmark text.
-    logoImage: null,
+    // The circular brand mark that sits beside the wordmark. The wordmark
+    // itself stays as text, so the pair scales cleanly. null hides the mark.
+    markImage: "assets/brand-mark.png",
   },
 
   // ---- Hero -----------------------------------------------------------

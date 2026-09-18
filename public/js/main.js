@@ -95,19 +95,24 @@ function renderWhy() {
 function renderBrand() {
   const { brand } = SITE_CONFIG;
 
+  // The lockup is composed here rather than shipped as one flat image, so
+  // the wordmark stays real text — crisp at any size, selectable, and
+  // readable by search engines and screen readers.
   document.querySelectorAll("[data-wordmark]").forEach((el) => {
-    if (brand.logoImage) {
-      el.innerHTML = `<img src="${brand.logoImage}" alt="${brand.name}" style="height:22px;width:auto;">`;
-    } else {
-      el.textContent = brand.wordmark;
-    }
+    const mark = brand.markImage
+      ? `<img class="brand-mark" src="${brand.markImage}" alt="" aria-hidden="true">`
+      : "";
+    el.innerHTML = `${mark}<span class="brand-text">${brand.wordmark}</span>`;
   });
 
   document.querySelectorAll("[data-brand-name]").forEach((el) => {
     el.textContent = brand.name;
   });
 
-  document.title = `${brand.name} — ${document.title}`;
+  // The static <title> already carries the brand name — prepending it
+  // here too produced "Molten Studios — Molten Studios — ...". Leaving
+  // the markup to own the title also means crawlers that do not run JS
+  // see the right thing.
 
   const year = document.querySelector("[data-year]");
   if (year) year.textContent = new Date().getFullYear();

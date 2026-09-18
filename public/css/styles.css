@@ -455,17 +455,55 @@ body.reduce-motion { scroll-behavior: auto; }
 /* The dark layer is doing the legibility work and the warm layer is
    the glow — in that order, because a glow alone on a bright patch of
    material makes type harder to read, not easier. */
+/* Brand lockup: circular seam mark beside the wordmark. Fraunces rather
+   than Inter here — the serif is the distinctive half of the type system,
+   and it pairs with an organic, photographic mark far better than a
+   geometric sans does. */
 .wordmark {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
   white-space: nowrap;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex: none;
+  display: block;
+  /* The mark is a dark rock face — a hairline stops it dissolving into
+     the dark plate behind the header. */
+  box-shadow: 0 0 0 1px rgba(255, 172, 46, 0.22), 0 2px 14px rgba(0, 0, 0, 0.6);
+}
+
+.brand-text {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
   color: #fff;
   text-shadow:
     0 1px 12px rgba(0, 0, 0, 0.9),
     0 0 22px rgba(255, 172, 46, 0.2);
+}
+
+/* The footer has room to breathe, so the lockup stacks there — the
+   arrangement that reads best at size. */
+.site-footer .wordmark {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.site-footer .brand-mark { width: 54px; height: 54px; }
+.site-footer .brand-text { font-size: 18px; }
+
+@media (max-width: 560px) {
+  .brand-mark { width: 26px; height: 26px; }
+  .brand-text { font-size: 14px; letter-spacing: 0.13em; }
 }
 
 .main-nav {
