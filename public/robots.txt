@@ -1,0 +1,8 @@
+# Molten Studios — moltenstudios.sg
+# Cloudflare's Bot Preference Sync prepends its own AI-crawler rules above
+# this file, so what is served is those rules followed by these.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://molten-studios.pages.dev/sitemap.xml

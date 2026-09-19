@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page not found — Molten Studios</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Deliberately standalone: no config.js, no main.js, no canvas rig.
+       A 404 has to render instantly even when something else on the site
+       is broken, so it carries everything it needs. -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #050506;
+      color: rgba(255, 255, 255, 0.94);
+      font-family: "Inter", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .bg {
+      position: fixed;
+      inset: -6%;
+      background: url("assets/stage-5-set.jpg") center / cover no-repeat;
+      opacity: 0.34;
+      z-index: 0;
+    }
+
+    .scrim {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(120% 90% at 50% 45%,
+        rgba(5, 6, 6, 0.55) 0%, rgba(5, 6, 6, 0.92) 70%);
+      z-index: 1;
+    }
+
+    .inner {
+      position: relative;
+      z-index: 2;
+      max-width: 540px;
+      text-align: center;
+    }
+
+    .mark {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      margin: 0 auto 34px;
+      display: block;
+      box-shadow: 0 0 0 1px rgba(255, 172, 46, 0.22), 0 2px 18px rgba(0, 0, 0, 0.7);
+    }
+
+    .code {
+      font-size: 11px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(160, 224, 171, 0.8);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-family: "Fraunces", serif;
+      font-weight: 300;
+      font-size: clamp(34px, 6vw, 52px);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      /* Descender guard, same as the hero — background-clip paints to the
+         padding box, so the box needs room below the baseline. */
+      background: linear-gradient(100deg, #ffd08a 0%, #ffac2e 48%, #ef8244 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      padding-bottom: 0.18em;
+      margin-bottom: -0.18em;
+    }
+
+    p {
+      margin-top: 26px;
+      font-size: 16px;
+      line-height: 1.66;
+      color: rgba(255, 255, 255, 0.62);
+    }
+
+    .actions {
+      margin-top: 40px;
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: background 0.6s cubic-bezier(0.19, 1, 0.22, 1),
+                  color 0.6s cubic-bezier(0.19, 1, 0.22, 1),
+                  border-color 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .btn-solid {
+      background: linear-gradient(105deg, #ffd08a 0%, #ffac2e 46%, #ef8244 100%);
+      color: #14100b;
+      font-weight: 500;
+    }
+
+    .btn-solid:hover { filter: brightness(1.08); }
+
+    .btn-ghost {
+      border-color: rgba(160, 224, 171, 0.42);
+      color: rgba(160, 224, 171, 0.92);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(160, 224, 171, 0.1);
+      border-color: rgb(160, 224, 171);
+    }
+
+    @media (max-width: 480px) {
+      .actions { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="scrim" aria-hidden="true"></div>
+
+  <main class="inner">
+    <img class="mark" src="assets/brand-mark.png" alt="Molten Studios" />
+    <p class="code">Error 404</p>
+    <h1>This page has cooled off.</h1>
+    <p>
+      The link you followed does not lead anywhere &mdash; it may have moved,
+      or it may never have existed. Nothing is broken on your end.
+    </p>
+    <div class="actions">
+      <a class="btn btn-solid" href="/">Back to the homepage</a>
+      <a class="btn btn-ghost" href="https://wa.me/6587656647" target="_blank" rel="noopener">WhatsApp us</a>
+    </div>
+  </main>
+</body>
+</html>
