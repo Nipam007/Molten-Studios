@@ -326,8 +326,11 @@ export const SITE_CONFIG = {
         // show — it outperforms any amount of copy about yourself. Ask
         // for one sentence: what they needed, and how it went. Leave
         // blank and the block simply doesn't render.
-        quote: "",
-        quoteAttribution: "", // e.g. "Owner, Lucky Card Co."
+        // Client-approved on 19 Sep 2026. Deliberately says nothing about
+        // results — Lucky Card Co. had not launched, so there were none to
+        // claim. It speaks only to what they personally experienced.
+        quote: "We came with a rough idea and got back a finished site with the card-pull demo, a machine finder and an enquiry form already working. Easy to deal with and quick to make changes.",
+        quoteAttribution: "Lucky Card Co."
       },
     ],
   },
