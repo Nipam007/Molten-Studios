@@ -414,7 +414,7 @@ export const SITE_CONFIG = {
       label: "WhatsApp us",
     },
     // Free form service — see notes in README. Leave as-is until you set one up.
-    formspreeEndpoint: "", // e.g. "https://formspree.io/f/abc123xy"
+    formspreeEndpoint: "https://formspree.io/f/xnpnjayb",
     // Optional booking link (Calendly or similar). Leave blank to hide the button.
     bookingUrl: "",
   },
