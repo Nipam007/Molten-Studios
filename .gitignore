@@ -7,3 +7,6 @@
 
 .wrangler/
 node_modules/
+
+# graphify knowledge-graph output — generated locally, regenerate with `/graphify .`
+graphify-out/
